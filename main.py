@@ -8,38 +8,107 @@ import cplex
 import pandas as pd
 import numpy as np
 
-def setproblemdata(p, X, y, k):
-    p.set_problem_name("integer lasso")
-    p.objective.set_sense(p.objective.sense.minimize)
+def set_mixed_integer_problem(problem, X, y, k, first_order_solution):
+    problem.set_problem_name("integer lasso")
+    problem.objective.set_sense(problem.objective.sense.minimize)
+
+    n = X.shape[0]
+    p = X.shape[1]
+
+    # if k == 0 return zeros ... 
+
+    # M = 2*np.max(np.abs(first_order_solution))
+    M = 100
+    z = (first_order_solution != 0) * 1
+    
+    #   min         x^T Q x + c^T x
+    #   subject to  Ax <= b
+    #               l <= x <= u
+    #               some x_i's binary or integral
 
     Q = X.T @ X
-    c = - X.T @ y
+    c = - 2 * X.T @ y
 
-    var_num = X.shape[1]
-    variables = [f'b{i}' for i in range(var_num)]
+    I = np.eye(p)
+    rvec = np.concatenate( (np.zeros(p), np.ones(p)) )
+    # A adds the SOS-1 constraint, cplex has built in sos TODO
+    # TODO: add beta norm < M_l to A 
+    A = np.vstack((np.hstack((I, -M * I)), 
+                   np.hstack((-I, -M * I)),
+                   rvec))
+    senses = "L" * (2 * p + 1)
+    rhs = np.concatenate((np.zeros(2*p), [k]))
+    ub = np.concatenate((np.full(p, M), np.ones(p)))
+    lb = np.concatenate((np.full(p, -M), np.zeros(p)))
+    obj = np.concatenate((c, np.zeros(p)))
+    var_types = "C" * p + "B" * p
+    # TODO start = ...
+
+    # https://stackoverflow.com/questions/38949055/linear-and-quadratic-terms-in-cplex-objective-function
+    qmat = [[[x for x in range(p)], row.tolist()] for row in Q]
+    problem.objective.set_quadratic(qmat)
+
+    var_names = [f'b{i}' for i in range(p)] + [f'z{i}' for i in range(p)]
     
-    types = 'I' * var_num
-    obj = c.tolist()
+    # lb = [ -cplex.infinity] * var_num
+    problem.variables.add(obj=obj.tolist(), lb=lb, ub=ub, types=var_types, names=var_names)
 
-    lb = [ -cplex.infinity] * var_num
-    p.variables.add(obj=obj,types=types, names=variables, lb=lb)
-
-    p.linear_constraints.add(names = ["c0"])
-    p.linear_constraints.set_rhs("c0", k)
-    ones = np.ones(var_num).tolist()
-    p.linear_constraints.set_linear_components("c0", [variables, np.ones(var_num).tolist()])
-    p.linear_constraints.set_senses("c0", "L")
-
-    qmat = [[[x for x in range(var_num)], row.tolist()] for row in Q]
-    p.objective.set_quadratic(qmat)
+    indices = np.arange(2*p).tolist()
+    A_as_sparse_pairs = [cplex.SparsePair(ind=indices, val=row.tolist()) for row in A]
+    problem.linear_constraints.add(lin_expr=A_as_sparse_pairs, rhs=rhs.tolist(), senses=senses)
 
 
-def lasso_qpex(X, y, k):
+def keep_top_k(x, k ):
+    ind = np.argsort(np.abs(x))[-k:]
+    x[ind] = 0
+    return x
+
+
+# projected gradients
+def get_first_order_solution(problem, X, y, k):
+    n = X.shape[0]
+    p = X.shape[1]
+
+    # init output (beta)
+    if ( p < n ){
+        # beta0 = lsfit .. #TODO
+    } else {
+        beta0 = X.t @ y / np.sum(X * X, axis=1)
+    }
+    beta0 = keep_top_k(beta0, k) 
+    L = # power method TODO
+
+    # projected gradient runs 
+    beta = beta0
+    beta_crit = np.inf
+    for _ in range(n_runs):
+        for _ in range(max_iter):
+            beta_old = beta
+            
+            # grad descent step:
+            grad = -X.T @ (y - X@beta)
+            beta = beta - grad/L 
+
+            beta = keep_top_k(beta, k)
+
+            if numpy.linalg.norm(beta - beta_old) / np.max((numpy.linalg.norm(), 1)) < tol:
+                break
+
+        curr_crit = np.sum( (y - X @ beta)**2 )
+        if curr_crit < best_crit:
+            best_crit = curr_crit
+            best_beta = beta
+        
+        beta = beta0 + 2 * np.random.rand(p) * np.max((np.abs(beta0), np.ones()))
+
+
+def best_subset(X, y, k):
 
     p = cplex.Cplex()
-    setproblemdata(p, X, y, k)
 
-    p.solve()
+    first_order_solution = get_first_order_solution(p, X, y, k)
+
+    set_mixed_integer_problem(p, X, y, k, first_order_solution)    
 
     sol = p.solution
 
@@ -63,12 +132,17 @@ def lasso_qpex(X, y, k):
 
 
 if __name__ == "__main__":
-    df = pd.read_csv('fitness.txt', delim_whitespace=True)
-    X = np.arange(1,100)
-    print(X)
-    X = np.outer(X, np.array([5,7]))
-    print(X)
-    y = X @ np.array([2,1])
+    n = 100
+    p = 5
+
+    X = np.random.rand(n, p)
+    # beta = np.random.randint(low=0, high=2,size=p)
+    beta = np.array([1, 0, 1, 0, 1])
+    print(beta)
+    # intercept = np.random.rand()
+    # noise = np.random.random(n) * 0.01
+    y = X @ beta # + intercept + noise
     print(y)
     # check different values of k
-    lasso_qpex(X, y, k = 4)
+    best_subset(X, y, k = 3)
+    print(f'ans{beta}')
