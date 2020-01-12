@@ -46,7 +46,7 @@ def set_mixed_integer_problem(problem, X, y, k, beta_approximation):
     z_approximation = (beta_approximation != 0) * 1
     starting_point = np.concatenate((beta_approximation, z_approximation))
 
-    var_types = "C" * p + "C" * p
+    var_types = "C" * p + "B" * p
     var_names = [f'b{i}' for i in range(p)] + [f'z{i}' for i in range(p)]
     problem.variables.add(obj=obj.tolist(), lb=lb, ub=ub, types=var_types, names=var_names)
 
@@ -62,7 +62,6 @@ def set_mixed_integer_problem(problem, X, y, k, beta_approximation):
 
     qmat = [[all_indices, row.tolist()] for row in Q]
     problem.objective.set_quadratic(qmat)
-
 
 
 def keep_top_k(x, k):
@@ -116,6 +115,7 @@ def get_first_order_solution(problem, X, y, k, n_runs=50, max_iter=1000, toleran
 
         curr_crit = np.sum( (y - X @ beta)**2 )
         if curr_crit < best_crit:
+            print("better beta found in gradient descent!")
             best_crit = curr_crit
             best_beta = beta
         
@@ -129,15 +129,9 @@ def best_subset(X, y, k):
     p = cplex.Cplex()
 
     first_order_solution = get_first_order_solution(p, X, y, k)
-    
-    print(first_order_solution)
-
     set_mixed_integer_problem(p, X, y, k, first_order_solution)    
-
-    p.write("best_subset.lp")
-
+    p.solve()
     sol = p.solution
-
     # solution.get_status() returns an integer code
     print("Solution status = ", sol.get_status(), ":", end=' ')
     # the following line prints the corresponding string
@@ -145,16 +139,20 @@ def best_subset(X, y, k):
     print("Solution value  = ", sol.get_objective_value())
 
     numrows = p.linear_constraints.get_num()
-
     for i in range(numrows):
         print("Row %d:  Slack = %10f" % (i, sol.get_linear_slacks(i)))
 
+    miqp_solution = []
     numcols = p.variables.get_num()
-
     for j in range(numcols):
         print("Column %d:  Value = %10f" % (j, sol.get_values(j)))
+        miqp_solution.append(sol.get_values(j))
 
     p.write("best_subset.lp")
+
+    miqp_solution_beta = np.array(miqp_solution)[:X.shape[1]]
+
+    return first_order_solution, miqp_solution_beta
 
 
 def standarize(X, y):
@@ -162,17 +160,25 @@ def standarize(X, y):
     # TODO ?
     pass
 
+
+def final_error(beta_pred, beta_true):
+    return np.sum( (beta_true - beta_pred)**2 )
+
+
 if __name__ == "__main__":
-    n = 100
-    p = 5
+    n = 1000
+    p = 100
 
     X = np.random.rand(n, p)
-    # beta = np.random.randint(low=0, high=2,size=p)
-    beta = np.array([1, 0, 1, 0, 1])
-    # intercept = np.random.rand()
-    # noise = np.random.random(n) * 0.01
+
+    # beta can be whatever
+    # beta = np.random.randint(low=0, high=2, size=p)
+    beta = np.random.rand(p) * 3
+    # TODO intercept handling
     y = X @ beta # + intercept + noise
-    print(y)
-    # check different values of k
-    best_subset(X, y, k = 3)
-    print(f'ans{beta}')
+
+    # first_order_solution, miqp_solution = best_subset(X, y, k = np.sum(beta) )
+    first_order_solution, miqp_solution = best_subset(X, y, k = beta.shape[0] // 2 )
+    print('ans: ', beta)
+    print('first order solution error: ', final_error(first_order_solution, beta))
+    print('miqp solution error: ', final_error(miqp_solution, beta))
