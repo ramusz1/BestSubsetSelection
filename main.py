@@ -1,9 +1,3 @@
-
-from __future__ import print_function
-
-import sys
-sys.path.append("/opt/ibm/ILOG/CPLEX_Studio_Community129/cplex/python/3.7/x86-64_linux")
-
 import cplex
 import pandas as pd
 import numpy as np
