@@ -1,9 +1,3 @@
-
-from __future__ import print_function
-
-import sys
-sys.path.append("/opt/ibm/ILOG/CPLEX_Studio_Community129/cplex/python/3.7/x86-64_linux")
-
 import cplex
 import pandas as pd
 import numpy as np
@@ -92,7 +86,7 @@ def get_first_order_solution(problem, X, y, k, n_runs=50, max_iter=1000, toleran
     if  p < n :
         beta0 = lm(X,y)
     else:
-        beta0 = X.t @ y / np.sum(X * X, axis=1)
+        beta0 = X.T @ y / np.sum(X * X, axis=1)
 
     beta0 = keep_top_k(beta0, k) 
     L = largest_eigen_value(X.T @ X)
@@ -164,21 +158,11 @@ def standarize(X, y):
 def final_error(beta_pred, beta_true):
     return np.sum( (beta_true - beta_pred)**2 )
 
-
-if __name__ == "__main__":
-    n = 1000
-    p = 100
-
-    X = np.random.rand(n, p)
-
-    # beta can be whatever
-    # beta = np.random.randint(low=0, high=2, size=p)
-    beta = np.random.rand(p) * 3
+def run(X, beta):
     # TODO intercept handling
-    y = X @ beta # + intercept + noise
+    beta_py = beta.flatten()
+    y = X @ beta_py # + intercept + noise
 
     # first_order_solution, miqp_solution = best_subset(X, y, k = np.sum(beta) )
-    first_order_solution, miqp_solution = best_subset(X, y, k = beta.shape[0] // 2 )
-    print('ans: ', beta)
-    print('first order solution error: ', final_error(first_order_solution, beta))
-    print('miqp solution error: ', final_error(miqp_solution, beta))
+    first_order_solution, miqp_solution = best_subset(X, y, k = beta_py.shape[0] // 2 )
+    return first_order_solution, miqp_solution
