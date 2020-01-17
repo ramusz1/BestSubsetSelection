@@ -114,3 +114,20 @@ mse_visualizations <- lapply(mse_benchmarks, function(mse_benchmark) {
 xor_visualizations <- lapply(xor_benchmarks, function(benchmark) {
   visualize_error(benchmark, error_name = "xor error")
 })
+
+# Save plots
+fig_dir <- "./figures/"
+lapply(names(visualizations), function(n) {
+  filename <- paste0("time_benchmark-", n, ".pdf")
+  ggsave(file.path(fig_dir, filename), visualizations[[n]])
+})
+
+lapply(names(mse_visualizations), function(n) {
+  filename <- paste0("mse_benchmark-", n, ".pdf")
+  ggsave(file.path(fig_dir, filename), mse_visualizations[[n]])
+})
+
+lapply(names(xor_visualizations), function(n) {
+  filename <- paste0("xor_benchmark-", n, ".pdf")
+  ggsave(file.path(fig_dir, filename), xor_visualizations[[n]])
+})
