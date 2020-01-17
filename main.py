@@ -149,7 +149,7 @@ def best_subset(X, y, k):
     return first_order_solution, miqp_solution_beta
 
 
-def standarize(X, y):
+def standarize(X, y, k):
     # Paper requires some standarization
     # TODO ?
     pass
@@ -158,11 +158,11 @@ def standarize(X, y):
 def final_error(beta_pred, beta_true):
     return np.sum( (beta_true - beta_pred)**2 )
 
-def run(X, beta):
+def run(X, beta, k):
     # TODO intercept handling
     beta_py = beta.flatten()
     y = X @ beta_py # + intercept + noise
 
     # first_order_solution, miqp_solution = best_subset(X, y, k = np.sum(beta) )
-    first_order_solution, miqp_solution = best_subset(X, y, k = beta_py.shape[0] // 2 )
+    first_order_solution, miqp_solution = best_subset(X, y, int(k))
     return first_order_solution, miqp_solution
