@@ -38,7 +38,7 @@ examples_const_small_obs_configs <- list(
 )
 
 examples_const_small_preds_configs <- list(
-  #list(observations = 10, predictors = 5),
+  list(observations = 10, predictors = 5),
   list(observations = 20, predictors = 5),
   list(observations = 30, predictors = 5),
   list(observations = 40, predictors = 5),
@@ -54,7 +54,7 @@ examples_large_configs <- list(
 
 examples <- list(
   small = generate_examples(examples_small_configs),
-  small_obs = generate_examples(examples_const_small_obs_configs)
-  #small_pred = generate_examples(examples_const_small_preds_configs)
+  small_obs = generate_examples(examples_const_small_obs_configs),
+  small_pred = generate_examples(examples_const_small_preds_configs)
   #large= generate_examples(examples_large_configs)
 )

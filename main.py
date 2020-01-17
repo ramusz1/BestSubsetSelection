@@ -86,7 +86,7 @@ def get_first_order_solution(problem, X, y, k, n_runs=50, max_iter=1000, toleran
     if  p < n :
         beta0 = lm(X,y)
     else:
-        beta0 = X.T @ y / np.sum(X * X, axis=1)
+        beta0 = X.T @ y / np.sum(X * X, axis=0)
 
     beta0 = keep_top_k(beta0, k) 
     L = largest_eigen_value(X.T @ X)

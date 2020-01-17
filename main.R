@@ -59,7 +59,7 @@ visualize_benchmarks <- function(benchmark) {
   ordered_df %>% 
     ggplot(aes(x = expr, y = mean_time, fill = expr)) + 
     geom_col() + 
-    labs(y = "Mean time", fill="Solver") + 
+    labs(x = "Solver", y = "Mean time", fill="Solver") + 
     coord_flip()
 }
 
@@ -69,5 +69,4 @@ precision_benchmarks <- lapply(examples, run_precision_benchmarks)
 
 # Visualize benchmarks
 visualizations <- lapply(benchmarks, visualize_benchmarks)
-
 
