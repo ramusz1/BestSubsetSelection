@@ -1,3 +1,5 @@
+library(magrittr)
+
 assert <- function(expression, error) {
   if (!expression) {
     stop(error, call. = FALSE)

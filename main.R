@@ -9,15 +9,52 @@ set.seed(2137)
 source("./examples.R")
 source("./solvers.R")
 
-
-run_benchmarks <- function(examples) {
+solver_time_benchmark <- function(solver, problem_examples, times) {
+  exprs <- lapply(problem_examples, function(problem_example) {
+    solver <- rlang::enquo(solver) 
+    rlang::expr(fun(X = problem_example$problem$X, y = problem_example$problem$y, k = problem_example$k))
+  })
+  
   microbenchmark(
-    leaps = leaps_benchmark_fun(examples),
-    gurobi = gurobi_benchmark_fun(examples),
-    bs_first_order = bs_first_order_benchmark_fun(examples),
-    times = 10
+    list = exprs,
+    times = times
   )
 }
+
+solver_comparison_time_benchmark <- function(solvers, problem_example, times) {
+  exprs <- lapply(solvers, function(solver) {
+    fun <- rlang::enquo(solver)
+    rlang::expr(fun(X = problem_example$problem$X, y = problem_example$problem$y, k = problem_example$k))
+  })
+  
+  microbenchmark(
+    list = exprs,
+    times = times
+  )
+}
+
+# Single solver many problems example
+k_diff_problem_examples <- lapply(3:8, function(k) {
+  list(
+    problem = example1_cases[[1]],
+    k = k
+  )
+})
+names(k_diff_problem_examples) <- paste("Case: k =", 3:8) # Must be named!
+solver_time_benchmark(gurobi_solver, k_diff_problem_examples, 4)
+
+# Many solvers single problem example
+solvers <- list(
+  leaps = leaps_solver,
+  gurobi = gurobi_solver
+)
+problem_example <- list(
+  problem = example1_cases[[1]],
+  k = 5
+)
+
+sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 5)
+boxplot(sample_comparison)
 
 mse_error <- function(example, result) {
   y_result <- example$X %*% result

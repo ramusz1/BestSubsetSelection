@@ -1,11 +1,3 @@
-create_solver_benchmark_fun <- function(solver_fun) {
-  function(examples) {
-    lapply(examples, function(example) {
-      solver_fun(X = example$X, y = example$y, k = 1)
-    })
-  }
-}
-
 cplex_solver <- function(X, beta, k) {
   run(X, beta, k)[[2]]
 }
@@ -15,7 +7,7 @@ gurobi_solver <- function(X, y, k) {
 }
 
 leaps_solver <- function(X, y, k) {
-  regsubsets(X, y, really.big = TRUE) %>% 
+  leaps::leaps(X, y) %>% 
     coef(id = k)
 }
 
@@ -33,7 +25,6 @@ glmnet_solver <- function(X, y, k) {
     length(selection) == k
   })
   subset_id <- min(which(status))
-  # z <- p[subset_id] use for other tests 
   coefs <- predict(fit, type = "coef")
   beta <- coefs[rownames(coefs) != '(Intercept)', subset_id]
   beta
@@ -45,11 +36,3 @@ lars_solver <- function(X, y, k) {
   beta <- object$beta[k+1,]
   beta
 }
-
-cplex_benchmark_fun <- create_solver_benchmark_fun(cplex_solver)
-leaps_benchmark_fun <- create_solver_benchmark_fun(leaps_solver)
-gurobi_benchmark_fun <- create_solver_benchmark_fun(gurobi_solver)
-bs_first_order_benchmark_fun <- create_solver_benchmark_fun(bs_first_order)
-lars_solver_benchmark_fun <- create_solver_benchmark_fun(lars_solver)
-glmnet_solver_benchmark_fun <- create_solver_benchmark_fun(glmnet_solver)
-
