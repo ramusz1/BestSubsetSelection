@@ -77,22 +77,18 @@ create_cov_matrix_for_example1 <- function(ro, p) {
 }
 
 beta_gen_strategy_example1 <- function(p) {
-  assert(p >= 10, "Examples should have p larger than 10!")
+  assert(p > 10, "Examples should have p larger than 10!")
   k0 <- round(runif(1, min = 5, max = 10))
   c(rep(0, k0), rep(1, p - k0))
 }
 generate_fun_example1 <- create_synthetic_example_generator(
   beta_gen_strategy = beta_gen_strategy_example1)
 example1_configs <- list(
-  list(observations = 10, ro = 0.7, p = 10, snr = 3),
-  list(observations = 10, ro = 0.7, p = 10, snr = 7),
   list(observations = 10, ro = 0.7, p = 11, snr = 3),
   list(observations = 10, ro = 0.7, p = 11, snr = 7),
   list(observations = 10, ro = 0.7, p = 12, snr = 3),
   list(observations = 10, ro = 0.7, p = 12, snr = 7),
-  list(observations = 10, ro = 0.7, p = 13, snr = 7),
-  list(observations = 10, ro = 0.8, p = 10, snr = 7),
-  list(observations = 10, ro = 0.9, p = 10, snr = 7)
+  list(observations = 10, ro = 0.7, p = 13, snr = 7)
 )
 
 example1_cases <- lapply(example1_configs, function(config) {
@@ -106,12 +102,11 @@ example1_cases <- lapply(example1_configs, function(config) {
 
 #' Example 2 generation
 beta_gen_strategy_example2 <- function(p) {
-  assert(p >= 5, "Examples should have p larger than 5!")
+  assert(p > 5, "Examples should have p larger than 5!")
   c(rep(1, 5), rep(0, p  - 5))
 }
 generate_fun_example2 <- create_synthetic_example_generator(beta_gen_strategy = beta_gen_strategy_example2)
 example2_configs <- list(
-  list(observations = 10, p = 10),
   list(observations = 10, p = 11),
   list(observations = 10, p = 12),
   list(observations = 10, p = 13),
@@ -129,12 +124,11 @@ example2_cases <- lapply(example1_configs, function(config) {
 
 #' Example 3 generation
 beta_gen_strategy_example3 <- function(p) {
-  assert(p >= 10, "Examples should have p larger than 10!")
+  assert(p > 10, "Examples should have p larger than 10!")
   c(0.5 + 9.5 * ((seq_len(10) - 1) / 10), rep(0, p - 10))
 }
 generate_fun_example3 <- create_synthetic_example_generator(beta_gen_strategy = beta_gen_strategy_example3)
 example3_configs <- list(
-  list(observations = 10, p = 10),
   list(observations = 10, p = 11),
   list(observations = 10, p = 12),
   list(observations = 10, p = 13),
@@ -152,17 +146,14 @@ example3_cases <- lapply(example1_configs, function(config) {
 
 #' Example 4 generation
 beta_gen_strategy_example4 <- function(p) {
-  assert(p >= 6, "Examples should have p larger than 10!")
+  assert(p > 6, "Examples should have p larger than 10!")
   c(-10, -6, -2, 2, 6, 10, rep(0, p - 6))
 }
 generate_fun_example4 <- create_synthetic_example_generator(beta_gen_strategy = beta_gen_strategy_example4)
 example4_configs <- list(
-  list(observations = 10, p = 10),
   list(observations = 10, p = 11),
   list(observations = 10, p = 12),
-  list(observations = 10, p = 13),
-  list(observations = 10, p = 10),
-  list(observations = 10, p = 10)
+  list(observations = 10, p = 13)
 )
 example4_cases <- lapply(example1_configs, function(config) {
   cov_matrix <- diag(config$p)
