@@ -4,10 +4,11 @@ library(ggplot2)
 library(microbenchmark)
 library(leaps)
 
+set.seed(2137)
+
 source("./examples.R")
 source("./solvers.R")
 
-set.seed(2137)
 
 run_benchmarks <- function(examples) {
   microbenchmark(

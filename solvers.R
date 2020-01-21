@@ -33,16 +33,13 @@ lm_solver <- function(X, beta, k) {
 }
 
 #' lasso from glmnet
-glmnet_solver <- function(X, beta, k) {
-  # library(glmnet)
-  y <- X %*% beta
-  fit <- glmnet(X, y)
+glmnet_solver <- function(X, y, k) {
+  fit <- glmnet::glmnet(X, y)
   selections <- predict(fit, type = "nonzero")
   print(selections)
   status <- sapply(selections, function(selection){
     length(selection) == k
   })
-  print(status)
   subset_id <- min(which(status))
   # z <- p[subset_id] use for other tests 
   coefs <- predict(fit, type = "coef")
@@ -50,11 +47,9 @@ glmnet_solver <- function(X, beta, k) {
   beta
 }
 
-lars_solver <- function(X, beta, k) {
-  y <- X %*% beta
-  # library(lars)
-  object <- lars(X,y,type="lasso")
-  # z <- unlist(object$actions)[1:k]
+lars_solver <- function(X, y, k) {
+  assert(dim(X)[2] >= k, "Wrong dimensions")
+  object <- lars::lars(X,y,type="lasso")
   beta <- object$beta[k+1,]
   beta
 }

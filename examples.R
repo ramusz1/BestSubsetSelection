@@ -5,6 +5,32 @@ assert <- function(expression, error) {
 }
 
 
+normalize_x <- function(X) {
+  m <- dim(X)[2]
+  for (col_ind in seq_len(m)) {
+    col <- X[, col_ind]
+    X[, col_ind] <- col / (sqrt(sum(col ^ 2)))
+  }
+  X
+}
+
+get_diabetes_data <- function() {
+  data(diabetes, package = "lars")
+  X <- diabetes$x2
+  # unit l2
+  for (col_ind in seq_len(dim(X)[2])) {
+    # standardize to zero mean
+    col <- X[, col_ind] - mean(X[, col_ind])
+    X[, col_ind] <- col / (sqrt(sum(col ^ 2)))
+  }
+  y <- diabetes$y
+  
+  list(
+    X = X,
+    y = y
+  )
+}
+
 #' Noise genarator based on signal noise ratio
 get_noise_from_snr <- function(y, snr){
   sd <- sqrt(var(y) / snr)
@@ -42,11 +68,8 @@ create_synthetic_example_generator <- function(beta_gen_strategy) {
     
     mu <- rep(0, cov_matrix_dim[2])
     X <- MASS::mvrnorm(n = observations, mu = mu, Sigma = cov_matrix)
-    # normalize rows
-    for (row_ind in seq_len(dim(X)[1])) {
-      row <- X[row_ind, ]
-      X[row_ind, ] <- row / (sqrt(sum(row ^ 2)))
-    }
+    # normalize cols
+    X <- normalize_x(X)
     
     beta <- beta_gen_strategy(p = cov_matrix_dim[1])
     noiseless_y <- X %*% beta
