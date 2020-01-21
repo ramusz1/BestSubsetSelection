@@ -12,11 +12,9 @@ source("./solvers.R")
 
 run_benchmarks <- function(examples) {
   microbenchmark(
-    cplex = cplex_benchmark_fun(examples),
     leaps = leaps_benchmark_fun(examples),
     gurobi = gurobi_benchmark_fun(examples),
     bs_first_order = bs_first_order_benchmark_fun(examples),
-    lm = lm_solver_benchmark_fun(examples),
     times = 10
   )
 }
@@ -27,10 +25,8 @@ mse_error <- function(example, result) {
 }
 
 mse_solvers <- list(
-  cplex = cplex_benchmark_fun,
   gurobi = gurobi_benchmark_fun,
-  bs_first_order = bs_first_order_benchmark_fun,
-  lm = lm_solver_benchmark_fun
+  bs_first_order = bs_first_order_benchmark_fun
 )
 
 xor_error <- function(example, result) {
