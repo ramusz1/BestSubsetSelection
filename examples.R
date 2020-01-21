@@ -4,6 +4,28 @@ assert <- function(expression, error) {
   }
 }
 
+
+#' Noise genarator based on signal noise ratio
+get_noise_from_snr <- function(y, snr){
+  sd <- sqrt(var(y) / snr)
+  rnorm(n = length(y), sd=sd)
+}
+
+# Check if snr noise generator works
+# X <- 1:100
+# b <- 1
+# noiseless_y <- X * b
+# snrs <- c(2, 4, 8)
+# y_with_noise <- lapply(snrs, function(snr){
+#   noise <- get_noise_from_snr(noiseless_y, snr)
+#   data.frame(y=noiseless_y + noise, snr=snr, x=X)
+# })
+# df <- do.call(rbind, y_with_noise)
+# df <- rbind(df, data.frame(y=noiseless_y, snr='inf', x=X))
+# library(ggplot2)
+# ggplot(df, aes(x=x, y=y, color=snr)) +
+#   geom_point()
+
 #' Creates a function for generating synthetic examples.
 #' 
 #' @param n number of observations to generate
@@ -13,7 +35,7 @@ assert <- function(expression, error) {
 #' @param k0 number of nonzero betas
 #' 
 create_synthetic_example_generator <- function(beta_gen_strategy) {
-  function(observations, cov_matrix) {
+  function(observations, cov_matrix, snr=7) {
     cov_matrix_dim <- dim(cov_matrix)
     assert(cov_matrix_dim[1] == cov_matrix_dim[2], 
            "cov_matrix should be a square matrix!")
@@ -27,8 +49,9 @@ create_synthetic_example_generator <- function(beta_gen_strategy) {
     }
     
     beta <- beta_gen_strategy(p = cov_matrix_dim[1])
-    eps <- rnorm(n = observations)
-    y <- X %*% beta + eps
+    noiseless_y <- X %*% beta
+    eps <- get_noise_from_snr(noiseless_y, snr)
+    y <- noiseless_y + eps
     
     list(
       X = X,
@@ -38,6 +61,8 @@ create_synthetic_example_generator <- function(beta_gen_strategy) {
     )
   }
 }
+
+
 
 #' Example 1 generation
 create_cov_matrix_for_example1 <- function(ro, p) {
@@ -56,21 +81,26 @@ beta_gen_strategy_example1 <- function(p) {
   k0 <- round(runif(1, min = 5, max = 10))
   c(rep(0, k0), rep(1, p - k0))
 }
-generate_fun_example1 <- create_synthetic_example_generator(beta_gen_strategy = beta_gen_strategy_example1)
+generate_fun_example1 <- create_synthetic_example_generator(
+  beta_gen_strategy = beta_gen_strategy_example1)
 example1_configs <- list(
-  list(observations = 10, ro = 0.7, p = 10),
-  list(observations = 10, ro = 0.7, p = 11),
-  list(observations = 10, ro = 0.7, p = 12),
-  list(observations = 10, ro = 0.7, p = 13),
-  list(observations = 10, ro = 0.8, p = 10),
-  list(observations = 10, ro = 0.9, p = 10)
+  list(observations = 10, ro = 0.7, p = 10, snr = 3),
+  list(observations = 10, ro = 0.7, p = 10, snr = 7),
+  list(observations = 10, ro = 0.7, p = 11, snr = 3),
+  list(observations = 10, ro = 0.7, p = 11, snr = 7),
+  list(observations = 10, ro = 0.7, p = 12, snr = 3),
+  list(observations = 10, ro = 0.7, p = 12, snr = 7),
+  list(observations = 10, ro = 0.7, p = 13, snr = 7),
+  list(observations = 10, ro = 0.8, p = 10, snr = 7),
+  list(observations = 10, ro = 0.9, p = 10, snr = 7)
 )
 
 example1_cases <- lapply(example1_configs, function(config) {
   cov_matrix <- create_cov_matrix_for_example1(ro = config$ro, p = config$p)
   generate_fun_example1(
     observations = config$observations,
-    cov_matrix = cov_matrix
+    cov_matrix = cov_matrix,
+    snr=config$snr
   )
 })
 
