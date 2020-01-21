@@ -5,6 +5,24 @@ assert <- function(expression, error) {
 }
 
 
+get_diabetes_data <- function() {
+  data(diabetes, package = "lars")
+  X <- diabetes$x2
+  # unit l2 norm
+  for (row_ind in seq_len(dim(X)[1])) {
+    # standardize to zero mean
+    row <- X[row_ind, ] - mean(X[row_ind, ])
+    X[row_ind, ] <- row / (sqrt(sum(row ^ 2)))
+  }
+  
+  y <- diabetes$y
+  
+  list(
+    X = X,
+    y = y
+  )
+}
+
 #' Noise genarator based on signal noise ratio
 get_noise_from_snr <- function(y, snr){
   sd <- sqrt(var(y) / snr)
