@@ -11,8 +11,7 @@ source("./solvers.R")
 
 solver_time_benchmark <- function(solver, problem_examples, times) {
   exprs <- lapply(problem_examples, function(problem_example) {
-    solver <- rlang::enquo(solver) 
-    rlang::expr(fun(X = problem_example$problem$X, y = problem_example$problem$y, k = problem_example$k))
+    rlang::expr(solver(X = !!(problem_example$problem$X), y = !!(problem_example$problem$y), k = !!(problem_example$k)))
   })
   
   microbenchmark(
@@ -22,9 +21,8 @@ solver_time_benchmark <- function(solver, problem_examples, times) {
 }
 
 solver_comparison_time_benchmark <- function(solvers, problem_example, times) {
-  exprs <- lapply(solvers, function(solver) {
-    fun <- rlang::enquo(solver)
-    rlang::expr(fun(X = problem_example$problem$X, y = problem_example$problem$y, k = problem_example$k))
+  exprs <- lapply(names(solvers), function(solver_name) {
+    rlang::expr(solvers[[!!solver_name]](X = !!(problem_example$problem$X), y = !!(problem_example$problem$y), k = !!(problem_example$k)))
   })
   
   microbenchmark(
@@ -50,7 +48,7 @@ solvers <- list(
 )
 problem_example <- list(
   problem = example1_cases[[1]],
-  k = 5
+  k = 10
 )
 
 sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 5)
