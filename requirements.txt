@@ -9,9 +9,9 @@ pandas==0.25.3
 pkg-resources==0.0.0
 python-dateutil==2.8.1
 pytz==2019.3
-requests==2.18.4
+requests==2.20.0
 scikit-learn==0.22.1
 scipy==1.4.1
 six==1.10.0
 sklearn==0.0
-urllib3==1.22
+urllib3==1.24.2
