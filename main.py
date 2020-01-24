@@ -223,7 +223,7 @@ def run(X, y, k, start):
     return beta_approximation, miqp_solution
 
 
-if __name__ == '__main__':
+def tests():
     n = 100
     p = 10
     X = np.random.rand(n, p)
