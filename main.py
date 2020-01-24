@@ -12,15 +12,13 @@ def set_mixed_integer_problem(problem, X, y, k, beta_approximation, M):
     n = X.shape[0]
     p = X.shape[1]
 
-    I = np.eye(p)
-    rvec = np.concatenate( (np.zeros(p), np.ones(p)) )
-    # A adds the SOS-1 constraint (b_i, 1 - z_i)
-    # cplex has built in sos TODO? (this might be hard because of 1 - z_i subtraction)
-    A = np.vstack((np.hstack((I, -M * I)), 
-                   np.hstack((-I, -M * I)),
-                   rvec))
-    senses = "L" * (2 * p + 1)
-    rhs = np.concatenate((np.zeros(2*p), [k]))
+    A = np.concatenate( (np.zeros(p), np.ones(p)) )
+    senses = "G"
+    # sum_z <= k
+    # - sum_z => -k
+    # p - sum_z => p - k
+    # sum z_inv => p - k
+    rhs = [p - k]
     ub = np.concatenate((np.full(p, M), np.ones(p)))
     lb = np.concatenate((np.full(p, -M), np.zeros(p)))
     Q = X.T @ X
@@ -35,18 +33,33 @@ def set_mixed_integer_problem(problem, X, y, k, beta_approximation, M):
     problem.variables.add(obj=obj.tolist(), lb=lb, ub=ub, types=var_types, names=var_names)
 
     all_indices = np.arange(2*p).tolist()
-    A_as_sparse_pairs = [cplex.SparsePair(ind=all_indices, val=row.tolist()) for row in A]
-    problem.linear_constraints.add(lin_expr=A_as_sparse_pairs, rhs=rhs.tolist(), senses=senses)
+    problem.linear_constraints.add(lin_expr=[cplex.SparsePair( all_indices, A.tolist())], rhs=rhs, senses=senses)
 
     if beta_approximation is not None:
-        z_approximation = (beta_approximation != 0) * 1
-        starting_point = np.concatenate((beta_approximation, z_approximation))
+        z_inv = (beta_approximation == 0) * 1
+        starting_point = np.concatenate((beta_approximation, z_inv))
 
         # initial problem solution
         problem.MIP_starts.add(
             cplex.SparsePair(ind=all_indices, val=starting_point.tolist()),
             problem.MIP_starts.effort_level.auto,
             "first_order_solution")
+        
+        sos_weights = []
+        for is_zero in z_inv:
+            weights = [1,2] if is_zero == 1 else [2,1]
+            sos_weights.append(weights)
+
+    else:
+        sos_weights = [np.random.permutation([1, 2]).tolist() for _ in range(p)]
+
+
+    # sos
+    for i in range(p):
+        problem.SOS.add(type = "1", name = "sos_{i}",
+                        SOS = cplex.SparsePair(ind = [i, i + p],
+                                               val = sos_weights[i]))
+
 
     qmat = [[all_indices, row.tolist()] for row in Q]
     problem.objective.set_quadratic(qmat)
@@ -195,7 +208,8 @@ def best_subset(X, y, k, start = 'warm'):
     p.write("best_subset.lp")
 
     miqp_solution_beta = np.array(miqp_solution)[:X.shape[1]]
-    miqp_solution_z = np.array(miqp_solution)[X.shape[1]:]
+    miqp_solution_z_inv = np.array(miqp_solution)[X.shape[1]:]
+    miqp_solution_z = 1 - miqp_solution_z_inv
 
     print(f"BETA: {miqp_solution_beta}\nZ: {miqp_solution_z}")
 
@@ -214,8 +228,11 @@ if __name__ == '__main__':
     p = 10
     X = np.random.rand(n, p)
     beta = np.random.rand(p) * 3
-    y = X @ beta 
     k = 5
+    z = np.concatenate((np.ones(k), np.zeros(p-k)))
+    beta *= z 
+    y = X @ beta 
     for start in ['warm', 'cold', 'mild', 'theory']:
         beta_approximation, miqp_solution = best_subset(X, y, k, start)
-        print(beta_approximation, miqp_solution)
+        print('ANS beta', beta)
+        print('ANS z', z)
