@@ -54,6 +54,24 @@ problem_example <- list(
 sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 5)
 boxplot(sample_comparison)
 
+# Different Cplex configs on single problem example 
+solvers <- list(
+  cplex_warm = get_cplex_solver('warm'),
+  cplex_mild = get_cplex_solver('mild'),
+  cplex_cold = get_cplex_solver('cold'),
+  cplex_theory = get_cplex_solver('theory') # fails
+)
+
+problem_example <- list(
+  problem = example5_cases[[1]],
+  k = 5
+)
+
+reticulate::source_python("main.py")
+sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 3)
+boxplot(sample_comparison)
+
+
 mse_error <- function(example, result) {
   y_result <- example$X %*% result
   mean((example$y - y_result)^2)

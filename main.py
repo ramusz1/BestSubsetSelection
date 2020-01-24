@@ -143,7 +143,7 @@ def get_miu(X):
 def theory_driven_big_M(X, y, k):
     miu = get_miu(X)
     if miu * (k - 1) >= 1:
-        raise ValueError("miu[k-1] >= 1, switching to mild start")
+        raise ValueError("miu[k-1] >= 1, theory start is unavaiable")
     gamma_k = 1 - miu * (k - 1) # minimum bound on gamma_k
 
     ## first expression
