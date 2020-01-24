@@ -154,7 +154,7 @@ def theory_driven_big_M(X, y, k):
     
     k_highest_correlations = - np.partition( - correlations, k)[:k]
     k_highest_correlations = k_highest_correlations ** 2
-    first_expr = 1 / gamma_k * np.sqrt(np.sum(correlations))
+    first_expr = 1 / gamma_k * np.sqrt(np.sum(k_highest_correlations))
 
     ## second expression
     second_expr = 1 / np.sqrt(gamma_k) * np.linalg.norm(y, ord=2)
