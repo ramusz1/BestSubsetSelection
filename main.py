@@ -112,13 +112,6 @@ def get_first_order_solution(X, y, k, n_runs=50, max_iter=1000, tolerance=1e-4):
     return best_beta
 
 
-def get_mild_start(X, y, k):
-    beta_approximation = get_fast_beta_approx(X, y, k) 
-    mild_start_tau = 5
-    big_M = mild_start_tau * np.max(np.abs(beta_approximation))
-    return beta_approximation, big_M
-
-
 def abs_corr(x, y):
     return np.corrcoef(x, y)[0][1]
 
@@ -129,19 +122,16 @@ def get_miu(X):
     for i in range(X_T.shape[0]):
         for j in range(i + 1, X_T.shape[0]):
             tmp = abs_corr(X_T[i], X_T[j])
-            max_corr = np.max((tmp, max_corr))
+            max_corr = max(tmp, max_corr)
 
     return max_corr
 
 
 def theory_driven_big_M(X, y, k):
     miu = get_miu(X)
-    if miu * (k - 1) < 1:
-        raise ValueError("miu[k-1] < 1, switching to mild start")
+    if miu * (k - 1) >= 1:
+        raise ValueError("miu[k-1] >= 1, switching to mild start")
     gamma_k = 1 - miu * (k - 1) # minimum bound on gamma_k
-    print("debugsssss")
-    print(miu)
-    print(gamma_k)
 
     ## first expression
     X_T = X.T
@@ -163,25 +153,29 @@ def theory_driven_big_M(X, y, k):
 def best_subset(X, y, k, start = 'warm'):
 
     if X.shape[0] < X.shape[1]:
-        print("WARNING, case p > n is not implemented yet")
+        print("WARNING, case p > n is not properly implemented yet")
 
     p = cplex.Cplex()
     if 'warm' == start:
         beta_approximation = get_first_order_solution(X, y, k)
         warm_start_tau = 2
         big_M = warm_start_tau * np.max(np.abs(beta_approximation))
-    elif 'mild' == start:
-        beta_approximation, big_M = get_mild_start(X, y, k) 
     elif 'cold' == start:
-        try:
-            big_M = theory_driven_big_M(X, y, k)
-            beta_approximation = None
-        except ValueError as v: #TODO better handling? 
-            print(v)
-            beta_approximation, big_M = get_mild_start(X, y, k) 
-        
+        big_M = np.inf
+        beta_approximation = None
+    elif 'mild' == start:
+        beta_approximation = get_fast_beta_approx(X, y, k) 
+        mild_start_tau = 5
+        big_M = mild_start_tau * np.max(np.abs(beta_approximation))
+    elif 'theory' == start:
+        big_M = theory_driven_big_M(X, y, k)
+        beta_approximation = None
     else :
         raise ValueError("start should be one of: warm, mild, cold")
+
+    print(f"Solving MIQP with {start} start")
+
+    print("[DEBUG] big_M", big_M)
 
     set_mixed_integer_problem(p, X, y, k, beta_approximation, big_M)
 
@@ -193,27 +187,25 @@ def best_subset(X, y, k, start = 'warm'):
     print(sol.status[sol.get_status()])
     print("Solution value  = ", sol.get_objective_value())
 
-    numrows = p.linear_constraints.get_num()
-    for i in range(numrows):
-        print("Row %d:  Slack = %10f" % (i, sol.get_linear_slacks(i)))
-
     miqp_solution = []
     numcols = p.variables.get_num()
     for j in range(numcols):
-        print("Column %d:  Value = %10f" % (j, sol.get_values(j)))
         miqp_solution.append(sol.get_values(j))
-
+    
     p.write("best_subset.lp")
 
     miqp_solution_beta = np.array(miqp_solution)[:X.shape[1]]
+    miqp_solution_z = np.array(miqp_solution)[X.shape[1]:]
+
+    print(f"BETA: {miqp_solution_beta}\nZ: {miqp_solution_z}")
 
     return beta_approximation, miqp_solution_beta
 
 
-def run(X, y, k):
+def run(X, y, k, start):
     y = y.flatten()
-
-    beta_approximation, miqp_solution = best_subset(X, y, k)
+    k = int(k)
+    beta_approximation, miqp_solution = best_subset(X, y, k, start)
     return beta_approximation, miqp_solution
 
 
@@ -224,6 +216,6 @@ if __name__ == '__main__':
     beta = np.random.rand(p) * 3
     y = X @ beta 
     k = 5
-    for start in ['warm', 'mild', 'cold']:
+    for start in ['warm', 'cold', 'mild', 'theory']:
         beta_approximation, miqp_solution = best_subset(X, y, k, start)
         print(beta_approximation, miqp_solution)
