@@ -13,12 +13,8 @@ def set_mixed_integer_problem(problem, X, y, k, xtx, beta_approximation, M):
     p = X.shape[1]
 
     A = np.concatenate( (np.zeros(p), np.ones(p)) )
-    senses = "G"
-    # sum_z <= k
-    # - sum_z => -k
-    # p - sum_z => p - k
-    # sum z_inv => p - k
     rhs = [p - k]
+    senses = "G"
     ub = np.concatenate((np.full(p, M), np.ones(p)))
     lb = np.concatenate((np.full(p, -M), np.zeros(p)))
     Q = xtx
@@ -65,104 +61,6 @@ def set_mixed_integer_problem(problem, X, y, k, xtx, beta_approximation, M):
     problem.objective.set_quadratic(qmat)
 
 
-def keep_top_k(x, k):
-    ind = np.argsort(np.abs(x))[:-k]
-    x[ind] = 0
-    return x
-
-
-def lm(X, y):
-    return LinearRegression().fit(X, y).coef_
-
-
-def get_fast_beta_approx(X, y, k):
-    beta = lm(X,y)
-    return keep_top_k(beta, k) 
-
-
-def largest_eigen_value(X, max_iter=100):
-    b = np.random.randn(X.shape[1])
-    for _ in range(max_iter):
-        v = X @ b
-        b = v / np.linalg.norm(v)
-    
-    return np.linalg.norm(v) / np.linalg.norm(b)
-
-
-# projected gradients
-def get_first_order_solution(X, y, k, n_runs=50, max_iter=1000, tolerance=1e-4):
-    n = X.shape[0]
-    p = X.shape[1]
-
-    # init output (beta)
-    beta0 = get_fast_beta_approx(X, y, k)
-    L = largest_eigen_value(X.T @ X)
-
-    # projected gradient runs 
-    beta = beta0
-    best_crit = np.inf
-    for _ in range(n_runs):
-        for _ in range(max_iter):
-            beta_old = beta
-            
-            # grad descent step:
-            grad = -X.T @ (y - X @ beta)
-            beta = beta - grad/L 
-
-            beta = keep_top_k(beta, k)
-
-            if np.linalg.norm(beta - beta_old) / np.max((np.linalg.norm(beta), 1)) < tolerance:
-                break
-
-        curr_crit = np.sum( (y - X @ beta)**2 )
-        if curr_crit < best_crit:
-            print("better beta found in gradient descent!")
-            best_crit = curr_crit
-            best_beta = beta
-        
-        beta = beta0 + 2 * np.random.rand(p) * np.max((np.abs(beta0), np.ones(p)), axis=0)
-
-    return best_beta
-
-
-def abs_corr(x, y):
-    return np.corrcoef(x, y)[0][1]
-
-
-def get_miu(X):
-    X_T = X.T
-    max_corr = -np.inf
-    for i in range(X_T.shape[0]):
-        for j in range(i + 1, X_T.shape[0]):
-            tmp = abs_corr(X_T[i], X_T[j])
-            max_corr = max(tmp, max_corr)
-
-    return max_corr
-
-
-def theory_driven_big_M(X, y, k):
-    miu = get_miu(X)
-    if miu * (k - 1) >= 1:
-        raise ValueError("miu[k-1] >= 1, theory start is unavaiable")
-    gamma_k = 1 - miu * (k - 1) # minimum bound on gamma_k
-
-    ## first expression
-    X_T = X.T
-    correlations = np.zeros(X_T.shape[0])
-    for i in range(X_T.shape[0]):
-        correlations[i] = abs_corr(X_T[i], y)
-    
-    k_highest_correlations = - np.partition( - correlations, k)[:k]
-    k_highest_correlations = k_highest_correlations ** 2
-    first_expr = 1 / gamma_k * np.sqrt(np.sum(k_highest_correlations))
-
-    ## second expression
-    second_expr = 1 / np.sqrt(gamma_k) * np.linalg.norm(y, ord=2)
-
-    big_M = min(first_expr, second_expr)
-    return big_M
-
-
 def get_solution(solved_problem):
     sol = solved_problem.solution
     # solution.get_status() returns an integer code
@@ -183,48 +81,11 @@ def get_solution(solved_problem):
     return solution_beta, solution_z
 
 
-def best_subset(X, y, k, start = 'warm'):
-
-    if X.shape[0] < X.shape[1]:
-        print("WARNING, case p > n is not properly implemented yet")
-
-    p = cplex.Cplex()
-    if 'warm' == start:
-        beta_approximation = get_first_order_solution(X, y, k)
-        warm_start_tau = 2
-        big_M = warm_start_tau * np.max(np.abs(beta_approximation))
-    elif 'cold' == start:
-        big_M = np.inf
-        beta_approximation = None
-    elif 'mild' == start:
-        beta_approximation = get_fast_beta_approx(X, y, k) 
-        mild_start_tau = 5
-        big_M = mild_start_tau * np.max(np.abs(beta_approximation))
-    elif 'theory' == start:
-        big_M = theory_driven_big_M(X, y, k)
-        beta_approximation = None
-    else :
-        raise ValueError("start should be one of: warm, mild, cold")
-
-    print(f"Solving MIQP with {start} start")
-    print("[DEBUG] big_M", big_M)
-    set_mixed_integer_problem(p, X, y, k, X.T @ X, beta_approximation, big_M)
-    p.solve()
-    miqp_solution_beta, miqp_solution_z = get_solution(p)
-    print(f"BETA: {miqp_solution_beta}\nZ: {miqp_solution_z}")
-    return beta_approximation, miqp_solution_beta
-
-
-def run_all(X, y, k, xtx, start):
+def run_cplex_miqp(X, y, k, xtx, beta0, big_M):
     y = y.flatten()
     k = int(k)
-    beta_approximation, miqp_solution = best_subset(X, y, k, xtx, start)
-    return beta_approximation, miqp_solution
-
-
-def run_miqp(X, y, k, xtx, beta0, big_M):
-    y = y.flatten()
-    k = int(k)
+    if beta0 is not None:
+        beta0 = np.array(beta0).flatten()
     p = cplex.Cplex()
     set_mixed_integer_problem(p, X, y, k, xtx, beta0, big_M)
     p.solve()
@@ -241,10 +102,6 @@ def tests():
     z = np.concatenate((np.ones(k), np.zeros(p-k)))
     beta *= z 
     y = X @ beta 
-    for start in ['warm', 'cold', 'mild', 'theory']:
-        beta_approximation, miqp_solution = best_subset(X, y, k, start)
-        print('ANS beta', beta)
-        print('ANS z', z)
 
-    beta_solution = run_miqp(X, y, k, X.T @ X, None, np.inf)
+    beta_solution = run_cplex_miqp(X, y, k, X.T @ X, None, np.inf)
     print(beta_solution)

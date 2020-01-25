@@ -39,26 +39,15 @@ k_diff_problem_examples <- lapply(3:8, function(k) {
   )
 })
 names(k_diff_problem_examples) <- paste("Case: k =", 3:8) # Must be named!
-solver_time_benchmark(gurobi_solver, k_diff_problem_examples, 4)
+solver_time_benchmark(lars_solver, k_diff_problem_examples, 4)
 
-# Many solvers single problem example
-solvers <- list(
-  leaps = leaps_solver,
-  gurobi = gurobi_solver
-)
-problem_example <- list(
-  problem = example1_cases[[1]],
-  k = 10
-)
-
-sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 5)
-boxplot(sample_comparison)
-
-# Different Cplex configs on single problem example 
+# Different miqp configs on single problem example 
 solvers <- list(
   cplex_warm = get_cplex_solver('warm'),
   cplex_mild = get_cplex_solver('mild'),
   cplex_cold = get_cplex_solver('cold'),
+  gurobi_warm = get_gurobi_solver('warm'),
+  gurobi_cold = get_gurobi_solver('cold'),
   cplex_theory = get_cplex_solver('theory') # fails
 )
 
@@ -68,7 +57,7 @@ problem_example <- list(
 )
 
 reticulate::source_python("main.py")
-sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 3)
+sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 1)
 boxplot(sample_comparison)
 
 
@@ -87,6 +76,7 @@ xor_error <- function(example, result) {
   sum(xor(example$z, result))
 }
 
+# TODO update
 xor_solvers <- list(
   cplex = cplex_benchmark_fun,
   gurobi = gurobi_benchmark_fun,
