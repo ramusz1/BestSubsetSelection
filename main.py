@@ -81,12 +81,13 @@ def get_solution(solved_problem):
     return solution_beta, solution_z
 
 
-def run_cplex_miqp(X, y, k, xtx, beta0, big_M):
+def run_cplex_miqp(X, y, k, xtx, beta0, big_M, timelimit=100):
     y = y.flatten()
     k = int(k)
     if beta0 is not None:
         beta0 = np.array(beta0).flatten()
     p = cplex.Cplex()
+    p.parameters.timelimit.set(timelimit)
     set_mixed_integer_problem(p, X, y, k, xtx, beta0, big_M)
     p.solve()
     beta, z = get_solution(p)
@@ -103,5 +104,5 @@ def tests():
     beta *= z 
     y = X @ beta 
 
-    beta_solution = run_cplex_miqp(X, y, k, X.T @ X, None, np.inf)
+    beta_solution = run_cplex_miqp(X, y, k, X.T @ X, None, np.inf, 1.5)
     print(beta_solution)
