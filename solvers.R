@@ -19,7 +19,7 @@ get_cplex_solver <- function(start) {
 #'        'theory' - using theoretical bounds and random starting point
 get_gurobi_solver <- function(start) {
   function(X, y, k){
-    bestsubset:::run_bs(X, y, k, start, bestsubset:::miqp_bs)
+    bestsubset:::run_bs(X, y, k, start, bestsubset:::miqp_bs)$beta
   }
 }
 
