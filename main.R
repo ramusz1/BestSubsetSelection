@@ -25,6 +25,7 @@ solver_comparison_time_benchmark <- function(solvers, problem_example, times) {
     rlang::expr(solvers[[!!solver_name]](X = !!(problem_example$problem$X), y = !!(problem_example$problem$y), k = !!(problem_example$k)))
   })
   
+  names(exprs) <- names(solvers)
   microbenchmark(
     list = exprs,
     times = times
@@ -56,7 +57,6 @@ problem_example <- list(
   k = 5
 )
 
-reticulate::source_python("main.py")
 sample_comparison <- solver_comparison_time_benchmark(solvers = solvers, problem_example, 1)
 boxplot(sample_comparison)
 
