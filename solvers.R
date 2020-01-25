@@ -1,9 +1,26 @@
-cplex_solver <- function(X, beta, k) {
-  run(X, beta, k)[[2]]
+
+#' Create CPLEX MIQP solver
+#' @param start can be one of: 
+#'        'warm' - starting using first order solution
+#'        'cold' - solver starts without any priors 
+#'        'mild' - starting point based on lm 
+#'        'theory' - using theoretical bounds and random starting point
+get_cplex_solver <- function(start) {
+  function(X, y, k) {
+    run_bs(X, y, k, start, run_cplex_miqp)
+  }
 }
 
-gurobi_solver <- function(X, y, k) {
-  bestsubset:::bs.one.k(X, y, k, xtx = t(X) %*% X)$beta
+#' Create GUROBI MIQP solver
+#' @param start can be one of: 
+#'        'warm' - starting using first order solution
+#'        'cold' - solver starts without any priors 
+#'        'mild' - starting point based on lm 
+#'        'theory' - using theoretical bounds and random starting point
+get_gurobi_solver <- function(start) {
+  function(X, y, k){
+    run_bs(X, y, k, start, miqp_bs)
+  }
 }
 
 leaps_solver <- function(X, y, k) {

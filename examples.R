@@ -177,9 +177,22 @@ example4_cases <- lapply(example1_configs, function(config) {
   )
 })  
 
+example5_configs <- list(
+  list(observations = 100, p = 10)
+)
+
+example5_cases <- lapply(example5_configs, function(config) {
+  cov_matrix <- diag(config$p)
+  generate_fun_example2(
+    observations = config$observations,
+    cov_matrix = cov_matrix
+  )
+})
+
 examples <- list(
   example1 = example1_cases,
   example2 = example2_cases,
   example3 = example3_cases,
-  example4 = example4_cases
+  example4 = example4_cases,
+  example5 = example5_cases
 )
