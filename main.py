@@ -5,7 +5,7 @@ from sklearn.linear_model import LinearRegression
 
 
 
-def set_mixed_integer_problem(problem, X, y, k, beta_approximation, M):
+def set_mixed_integer_problem(problem, X, y, k, xtx, beta_approximation, M):
     problem.set_problem_name("integer lasso")
     problem.objective.set_sense(problem.objective.sense.minimize)
 
@@ -21,7 +21,7 @@ def set_mixed_integer_problem(problem, X, y, k, beta_approximation, M):
     rhs = [p - k]
     ub = np.concatenate((np.full(p, M), np.ones(p)))
     lb = np.concatenate((np.full(p, -M), np.zeros(p)))
-    Q = X.T @ X
+    Q = xtx
     c = - X.T @ y
     # add zeros because of z vector 
     Q = np.hstack((np.vstack((Q, np.zeros((p,p)) )),
@@ -190,7 +190,7 @@ def best_subset(X, y, k, start = 'warm'):
 
     print("[DEBUG] big_M", big_M)
 
-    set_mixed_integer_problem(p, X, y, k, beta_approximation, big_M)
+    set_mixed_integer_problem(p, X, y, k, X.T @ X, beta_approximation, big_M)
 
     p.solve()
     sol = p.solution
@@ -236,3 +236,5 @@ def tests():
         beta_approximation, miqp_solution = best_subset(X, y, k, start)
         print('ANS beta', beta)
         print('ANS z', z)
+
+tests()
