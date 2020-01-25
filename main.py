@@ -163,6 +163,26 @@ def theory_driven_big_M(X, y, k):
     return big_M
 
 
+def get_solution(solved_problem):
+    sol = solved_problem.solution
+    # solution.get_status() returns an integer code
+    print("Solution status = ", sol.get_status(), ":", end=' ')
+    # the following line prints the corresponding string
+    print(sol.status[sol.get_status()])
+    print("Solution value  = ", sol.get_objective_value())
+
+    miqp_solution = []
+    numcols = solved_problem.variables.get_num()
+    for j in range(numcols):
+        miqp_solution.append(sol.get_values(j))
+    
+    beta_length = len(miqp_solution) // 2
+    solution_beta = np.array(miqp_solution)[:beta_length]
+    solution_z_inv = np.array(miqp_solution)[beta_length:]
+    solution_z = 1 - solution_z_inv
+    return solution_beta, solution_z
+
+
 def best_subset(X, y, k, start = 'warm'):
 
     if X.shape[0] < X.shape[1]:
@@ -187,40 +207,29 @@ def best_subset(X, y, k, start = 'warm'):
         raise ValueError("start should be one of: warm, mild, cold")
 
     print(f"Solving MIQP with {start} start")
-
     print("[DEBUG] big_M", big_M)
-
     set_mixed_integer_problem(p, X, y, k, X.T @ X, beta_approximation, big_M)
-
     p.solve()
-    sol = p.solution
-    # solution.get_status() returns an integer code
-    print("Solution status = ", sol.get_status(), ":", end=' ')
-    # the following line prints the corresponding string
-    print(sol.status[sol.get_status()])
-    print("Solution value  = ", sol.get_objective_value())
-
-    miqp_solution = []
-    numcols = p.variables.get_num()
-    for j in range(numcols):
-        miqp_solution.append(sol.get_values(j))
-    
-    p.write("best_subset.lp")
-
-    miqp_solution_beta = np.array(miqp_solution)[:X.shape[1]]
-    miqp_solution_z_inv = np.array(miqp_solution)[X.shape[1]:]
-    miqp_solution_z = 1 - miqp_solution_z_inv
-
+    miqp_solution_beta, miqp_solution_z = get_solution(p)
     print(f"BETA: {miqp_solution_beta}\nZ: {miqp_solution_z}")
-
     return beta_approximation, miqp_solution_beta
 
 
-def run(X, y, k, start):
+def run_all(X, y, k, xtx, start):
     y = y.flatten()
     k = int(k)
-    beta_approximation, miqp_solution = best_subset(X, y, k, start)
+    beta_approximation, miqp_solution = best_subset(X, y, k, xtx, start)
     return beta_approximation, miqp_solution
+
+
+def run_miqp(X, y, k, xtx, beta0, big_M):
+    y = y.flatten()
+    k = int(k)
+    p = cplex.Cplex()
+    set_mixed_integer_problem(p, X, y, k, xtx, beta0, big_M)
+    p.solve()
+    beta, z = get_solution(p)
+    return beta
 
 
 def tests():
@@ -237,4 +246,5 @@ def tests():
         print('ANS beta', beta)
         print('ANS z', z)
 
-tests()
+    beta_solution = run_miqp(X, y, k, X.T @ X, None, np.inf)
+    print(beta_solution)
