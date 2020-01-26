@@ -130,7 +130,7 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 solvers <- list(
   cplex_warm = get_cplex_solver('warm'),
-  cplex_mild = get_cplex_solver('mild'),
+  cplex_mild = get_cplex_solver('theory'),
   cplex_cold = get_cplex_solver('cold'),
   gurobi_warm = get_gurobi_solver('warm'),
   gurobi_cold = get_gurobi_solver('cold'),
