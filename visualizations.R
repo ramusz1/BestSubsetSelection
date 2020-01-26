@@ -14,7 +14,10 @@ plot_solver_times <- function(benchmarks) {
     df %>% group_by(expr, solver) %>% summarize(mean_time = mean(time))
   })
   df <- bind_rows(benchmark_dfs)
-  ggplot(df, aes(x = expr, y = solver, fill = mean_time)) + geom_tile() + scale_fill_viridis_c()
+  df %>% 
+    ggplot(aes(x = expr, y = mean_time)) +
+    geom_bar(aes(fill = solver), position = "dodge", stat = "identity")
+  #ggplot(df, aes(x = expr, y = solver, fill = mean_time)) + geom_tile() + scale_fill_viridis_c()
 }
 
 plot_performance_benchmark <- function(benchmark) {

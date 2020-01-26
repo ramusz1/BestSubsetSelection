@@ -43,11 +43,12 @@ solvers_performance_benchmark <- function(solvers, problem_examples, cl) {
   clusterExport(cl = cl, "solvers", envir = cur_env)
   clusterExport(cl = cl, "problem_examples", envir = cur_env)
   clusterExport(cl = cl, "calculate_prediction_performance", envir = cur_env)
+  Sys.sleep(10)
   
   single_solver_performance_benchmark <- function(solvers, problem_example) {
     single_solver_benchmark <- function(solver) {
       print("Solver!")
-      k_list <- seq(1, problem_example$k, by = 5)
+      k_list <- seq(1, problem_example$k)
       model_results <- parLapply(cl = cl, k_list, function(k) {
         library(bestsubset)
         library(magrittr)
@@ -93,15 +94,15 @@ solvers_performance_benchmark <- function(solvers, problem_examples, cl) {
 # Time benchmark for growing number of observations
 solvers <- list(
   cplex_warm = get_cplex_solver('warm'),
-  cplex_mild = get_cplex_solver('mild'),
   cplex_cold = get_cplex_solver('cold'),
   gurobi_warm = get_gurobi_solver('warm'),
   gurobi_cold = get_gurobi_solver('cold'),
   first_order = bs_first_order,
-  leaps = leaps_solver
+  leaps = leaps_solver,
+  lars = lars_solver
 )
 fixed_variables_changing_observations_benchmarks <- lapply(solvers, function(solver) {
-  solver_time_benchmark(solver, examples$fixed_variables_changing_observations, 10)
+  solver_time_benchmark(solver, examples$fixed_variables_changing_observations, 100)
 })
 fixed_variables_changing_observations_plot <- plot_solver_times(
   benchmarks = fixed_variables_changing_observations_benchmarks
@@ -110,16 +111,16 @@ fixed_variables_changing_observations_plot <- plot_solver_times(
 # Time benchmark for growing number of variables
 solvers <- list(
   cplex_warm = get_cplex_solver('warm'),
-  cplex_mild = get_cplex_solver('mild'),
   cplex_cold = get_cplex_solver('cold'),
   gurobi_warm = get_gurobi_solver('warm'),
   gurobi_cold = get_gurobi_solver('cold'),
-  first_order = bs_first_order
+  first_order = bs_first_order,
+  lars = lars_solver
 )
 
 
 fixed_observations_changing_variables_benchmarks <- lapply(solvers, function(solver) {
-  solver_time_benchmark(solver, examples$fixed_observations_changing_variables, 10)
+  solver_time_benchmark(solver, examples$fixed_observations_changing_variables, 100)
 })
 fixed_observations_changing_variables_plot <- plot_solver_times(
   benchmarks = fixed_observations_changing_variables_benchmarks
@@ -130,7 +131,6 @@ num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 solvers <- list(
   cplex_warm = get_cplex_solver('warm'),
-  cplex_mild = get_cplex_solver('theory'),
   cplex_cold = get_cplex_solver('cold'),
   gurobi_warm = get_gurobi_solver('warm'),
   gurobi_cold = get_gurobi_solver('cold'),
@@ -143,7 +143,7 @@ precision_and_best_subset_benchmarks <- solvers_performance_benchmark(
   problem_examples = examples$precision_and_best_subset_exmaple,
   cl = cl
 )
-saveRDS(precision_and_best_subset_benchmarks, "backup.RDS")
+#saveRDS(precision_and_best_subset_benchmarks, "backup-full.RDS")
 plot_performance_benchmark(precision_and_best_subset_benchmarks)
 cl <- NULL
 

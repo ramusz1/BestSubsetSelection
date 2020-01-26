@@ -163,11 +163,11 @@ create_problem_examples_like_example1 <- function(configs) {
 }
 
 fixed_variables_changing_observations_example_config <- list(
-  "500 observations" = list(observations = 500, p = 10, k = 7),
-  "1500 observations" = list(observations = 1500, p = 10, k = 7),
-  "2500 observations" = list(observations = 2500, p = 10, k = 7),
-  "3500 observations" = list(observations = 3500, p = 10, k = 7),
-  "4500 observations" = list(observations = 4500, p = 10, k = 7)
+  "500 observations" = list(observations = 500, p = 40, k = 7),
+  "1500 observations" = list(observations = 1500, p = 40, k = 30),
+  "2500 observations" = list(observations = 2500, p = 40, k = 30),
+  "3500 observations" = list(observations = 3500, p = 40, k = 30),
+  "4500 observations" = list(observations = 4500, p = 40, k = 30)
 )
 
 fixed_observations_changing_variables_example_config <- list(
