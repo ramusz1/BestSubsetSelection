@@ -92,7 +92,10 @@ create_cov_matrix_gen_strategy <- function(ro) {
 beta_gen_strategy_example1 <- function(p) {
   assert(p > 10, "Examples should have p larger than 10!")
   k0 <- 10
-  c(rep(0, p-k0), rep(1, k0))
+  one_inds <- seq(1, p, length.out = k0)
+  beta <- rep(0, p)
+  beta[one_inds] <- 1
+  beta
 }
 
 #' Example 2 generation
