@@ -129,12 +129,13 @@ fixed_observations_changing_variables_plot <- plot_solver_times(
 num_cores <- detectCores()
 cl <- makeCluster(num_cores)
 solvers <- list(
-  # cplex_warm = get_cplex_solver('warm'),
-  # cplex_mild = get_cplex_solver('mild'),
-  # cplex_cold = get_cplex_solver('cold'),
-  # gurobi_warm = get_gurobi_solver('warm'),
-  # gurobi_cold = get_gurobi_solver('cold'),
-  first_order = bs_first_order
+  cplex_warm = get_cplex_solver('warm'),
+  cplex_mild = get_cplex_solver('mild'),
+  cplex_cold = get_cplex_solver('cold'),
+  gurobi_warm = get_gurobi_solver('warm'),
+  gurobi_cold = get_gurobi_solver('cold'),
+  first_order = bs_first_order,
+  lars = lars_solver
 )
 
 precision_and_best_subset_benchmarks <- solvers_performance_benchmark(

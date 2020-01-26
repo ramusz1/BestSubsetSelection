@@ -48,7 +48,6 @@ glmnet_solver <- function(X, y, k) {
 }
 
 lars_solver <- function(X, y, k) {
-  assert(dim(X)[2] >= k, "Wrong dimensions")
   object <- lars::lars(X,y,type="lasso")
   beta <- object$beta[k+1,]
   beta
