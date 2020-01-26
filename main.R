@@ -142,6 +142,7 @@ precision_and_best_subset_benchmarks <- solvers_performance_benchmark(
   problem_examples = examples$precision_and_best_subset_exmaple,
   cl = cl
 )
+saveRDS(precision_and_best_subset_benchmarks, "backup.RDS")
 plot_performance_benchmark(precision_and_best_subset_benchmarks)
 cl <- NULL
 
