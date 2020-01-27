@@ -3,9 +3,14 @@ title: "Best subset selection"
 author: "Rafał Muszyński, Ryszard Szymański"
 date: "1/27/2020"
 bibliography: bibliography.bib
+header-includes:
+   - \usepackage{amsmath}
+   - \usepackage{amsthm}
+   - \usepackage{dsfont}
 output: 
   beamer_presentation:
     theme: Warsaw
+  
 ---
 
 ```{r setup, include=FALSE}
@@ -14,16 +19,75 @@ knitr::opts_chunk$set(echo = FALSE)
 
 ## Agenda
 
-1. Motivation
+1. Problem introduction
 2. Solution
 3. Benchmarks
 4. Summary
+
+## Introduction
+Problem: feature selection in linear regression
+\begin{equation}
+\begin{split}
+y = X \beta + \epsilon \\ 
+\min_{\beta} ||y - X \beta||_2^2 
+\end{split}
+\end{equation}
+
+Well known solution : Lasso: @tibshirani_regression_1996
+\begin{equation}
+\min_{\beta} \frac{1}{2}||y - X \beta||_2^2 + \lambda ||\beta||_1
+\end{equation}
+
+Testing findings of @bertsimas_best_2016 
+
+## Motivation
+
+- Advances in both hardware and optimization frameworks such as CPLEX and GUROBI
+- Best subset selection is an NP-hard problem
+
+
+## Solution
+Restricted formulation of a MIQP problem.
+
+\begin{equation}
+    \begin{split}
+        &\min \alpha^TQ\alpha + \alpha^Ta \\
+        \text{s.t. } \quad &A\alpha < b \\
+        &\alpha_i \in \{0,1\}, i \in \mathcal{I} \\
+        &\alpha_i \in I\!R, i \notin \mathcal{I}\\
+    \end{split}
+\end{equation}
+
+
+## Solution
+Best subset selection problem formulation
+
+\begin{equation}
+\label{eq:bertsimas_problem}
+\begin{split}
+    &\min_{\beta} ||y - X \beta||_2^2 \\ 
+    \text{s.t. } \quad &||\beta||_0  \leq k \\
+    &||\beta||_0  = \sum_{i=1}^p 1(\beta_i \neq 0)\\
+\end{split}
+\end{equation}
+
+## Solution
+Final problem formulation
+\begin{equation}
+\begin{split}
+&\min_{\beta, z} \frac{1}{2} \beta^{T}(X^{T} X) \beta-\langle X'y, \beta \rangle+\frac{1}{2}\|y\|_{2}^{2} \\
+\text { s.t. } \quad &(\beta_{i}, z'_{i}): \text{SOS-1}, \quad i=1, \ldots, p \\ 
+&z'_{i} \in\{0,1\}, \quad i=1, \ldots, p \\
+&\sum_{i=1}^{p} z'_{i} \geq p - k \\ 
+&-\mathcal{M}_{U} \leq \beta_{i} \leq \mathcal{M}_{U}, \quad  i=1, \ldots, p  \\
+\end{split}
+\end{equation}
 
 ## Benchmarks
 
 - Both synthetic and real life datasets
 
-- Syntethic datasets generated according to *Bertsimas et al. (2016)*
+- Syntethic datasets generated according to @bertsimas_best_2016
 
 - Performed benchmarks analyzed:
 
@@ -38,3 +102,5 @@ knitr::opts_chunk$set(echo = FALSE)
 - Diabetes
 
 ## Bibliography
+
+
