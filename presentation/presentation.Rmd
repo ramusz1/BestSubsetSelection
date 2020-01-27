@@ -7,6 +7,7 @@ header-includes:
    - \usepackage{amsmath}
    - \usepackage{amsthm}
    - \usepackage{dsfont}
+   - \usepackage{algorithm2e}
 output: 
   beamer_presentation:
     theme: Warsaw
@@ -82,6 +83,21 @@ Final problem formulation
 &-\mathcal{M}_{U} \leq \beta_{i} \leq \mathcal{M}_{U}, \quad  i=1, \ldots, p  \\
 \end{split}
 \end{equation}
+
+## Solution 
+First order method
+\SetKwRepeat{Do}{do}{while}
+\begin{algorithm}[H]
+\SetAlgoLined
+\KwData{function: $g(\beta)$, parameter: L, convergence tolerance: $\epsilon$, parameter: k}
+\KwResult{$\beta$ approximation}
+ $\beta_1 \text{ random initialization, } \beta_1 \in I\!R, \|\beta\|_0 < k$\\
+ \Do{$g(\beta_m) - g(\beta_{m+1}) \leq \epsilon$}{
+    $\beta_{m+1} \in H_k(\beta_m - \frac{1}{L}\nabla g(\beta_m)) $
+ }
+ \caption{Discrete first-order method}
+\end{algorithm}
+
 
 ## Benchmarks
 
