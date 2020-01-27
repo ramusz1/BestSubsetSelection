@@ -1,0 +1,40 @@
+---
+title: "Best subset selection"
+author: "Rafał Muszyński, Ryszard Szymański"
+date: "1/27/2020"
+bibliography: bibliography.bib
+output: 
+  beamer_presentation:
+    theme: Warsaw
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+## Agenda
+
+1. Motivation
+2. Solution
+3. Benchmarks
+4. Summary
+
+## Benchmarks
+
+- Both synthetic and real life datasets
+
+- Syntethic datasets generated according to *Bertsimas et al. (2016)*
+
+- Performed benchmarks analyzed:
+
+  - Predictive performance
+  
+  - Speed
+  
+  - Gap values for Warm/Cold start approaches
+  
+## Benchmarks - datasets
+
+- Diabetes
+
+## Bibliography
