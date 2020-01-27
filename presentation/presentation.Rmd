@@ -8,6 +8,7 @@ header-includes:
    - \usepackage{amsthm}
    - \usepackage{dsfont}
    - \usepackage{algorithm2e}
+   - \renewcommand{\tightlist}{\setlength{\itemsep}{5ex}\setlength{\parskip}{0pt}}
 output: 
   beamer_presentation:
     theme: Warsaw
@@ -43,6 +44,7 @@ Testing findings of @bertsimas_best_2016
 
 ## Motivation
 
+- LASSO shortcomings e.g. larger coefficients are more penalized then smaller coefficients
 - Advances in both hardware and optimization frameworks such as CPLEX and GUROBI
 - Best subset selection is an NP-hard problem
 
@@ -102,20 +104,54 @@ First order method
 ## Benchmarks
 
 - Both synthetic and real life datasets
-
-- Syntethic datasets generated according to @bertsimas_best_2016
-
-- Performed benchmarks analyzed:
-
+- Syntethic datasets generated according to the procedure described in @bertsimas_best_2016
+- Performed benchmarks analyzed
   - Predictive performance
-  
   - Speed
-  
   - Gap values for Warm/Cold start approaches
   
 ## Benchmarks - datasets
 
-- Diabetes
+- Diabetes dataset
+- Synthetic datasets
+  - $x_i$ ~ $N(0, \Sigma)$, each standardized to have unit $l2$ norm
+  - $y = X\beta^0 + \epsilon, \ \ \epsilon$ ~ $N(0, \sigma^2)$
+  - The choice of $X, \beta^0, \epsilon$ determines the Signal-To-Noise Ratio: $SNR = \frac{var(X\beta^0)}{\sigma^2}$
+
+## Benchmarks - predictive performance
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=\linewidth]{../figures/predictive_performance_plot.pdf}
+        \caption{Predictive performance of researched methods.}
+        \label{fig:performance_plot}
+\end{figure}
+
+
+## Benchmarks - optimality gap for warm/cold starts
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[height=70mm, width=0.7\linewidth]{../figures/start-comparision.pdf}
+        \caption{Optimality gap for warm and cold start.}
+        \label{fig:performance_plot}
+\end{figure}
+
+
+## Benchmarks - speed performance
+
+\begin{figure}[htb]
+        \centering
+        \includegraphics[width=\linewidth]{../figures/speed_performance_plot.pdf}
+        \caption{Speed of researched methods for datasets with a fixed number of variables (40) or observations (5000)}
+        \label{fig:speed_plot}
+\end{figure}
+
+
+## Summary
+
+- The MIO approach outperforms LARS in terms of predictive results
+- The proposed mild approach allows for obtaining high quality results in times similar to LARS
 
 ## Bibliography
 
