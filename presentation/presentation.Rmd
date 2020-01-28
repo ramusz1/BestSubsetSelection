@@ -23,8 +23,9 @@ knitr::opts_chunk$set(echo = FALSE)
 
 1. Problem introduction
 2. Solution
-3. Benchmarks
-4. Summary
+3. Implementation
+4. Benchmarks
+5. Summary
 
 ## Introduction
 Problem: feature selection in linear regression
@@ -55,7 +56,7 @@ Restricted formulation of a MIQP problem.
 \begin{equation}
     \begin{split}
         &\min \alpha^TQ\alpha + \alpha^Ta \\
-        \text{s.t. } \quad &A\alpha < b \\
+        \text{s.t. } \quad &A\alpha \leq b \\
         &\alpha_i \in \{0,1\}, i \in \mathcal{I} \\
         &\alpha_i \in I\!R, i \notin \mathcal{I}\\
     \end{split}
@@ -79,9 +80,9 @@ Final problem formulation
 \begin{equation}
 \begin{split}
 &\min_{\beta, z} \frac{1}{2} \beta^{T}(X^{T} X) \beta-\langle X'y, \beta \rangle+\frac{1}{2}\|y\|_{2}^{2} \\
-\text { s.t. } \quad &(\beta_{i}, z'_{i}): \text{SOS-1}, \quad i=1, \ldots, p \\ 
-&z'_{i} \in\{0,1\}, \quad i=1, \ldots, p \\
-&\sum_{i=1}^{p} z'_{i} \geq p - k \\ 
+\text { s.t. } \quad &(\beta_{i}, 1 - z_{i}): \text{SOS-1}, \quad i=1, \ldots, p \\ 
+&z_{i} \in\{0,1\}, \quad i=1, \ldots, p \\
+&\sum_{i=1}^{p} z_{i} \leq k \\ 
 &-\mathcal{M}_{U} \leq \beta_{i} \leq \mathcal{M}_{U}, \quad  i=1, \ldots, p  \\
 \end{split}
 \end{equation}
@@ -100,6 +101,19 @@ First order method
  \caption{Discrete first-order method}
 \end{algorithm}
 
+## Implementation
+
+- Three different starting methods:
+  - Cold
+  - Mild
+  - Warm
+
+- Two different solvers used:
+  - CPLEX
+  - GUROBI
+  
+- Parallelization for different $k$ values
+
 
 ## Benchmarks
 
@@ -108,7 +122,7 @@ First order method
 - Performed benchmarks analyzed
   - Predictive performance
   - Speed
-  - Gap values for Warm/Cold start approaches
+  - Gap values for Warm/Mild/Cold start approaches
   
 ## Benchmarks - datasets
 
@@ -132,8 +146,8 @@ First order method
 
 \begin{figure}[htb]
         \centering
-        \includegraphics[height=70mm, width=0.7\linewidth]{../figures/start-comparision.pdf}
-        \caption{Optimality gap for warm and cold start.}
+        \includegraphics[width=\linewidth]{../figures/start-comparision.pdf}
+        \caption{Optimality gap for warm, cold and mild start.}
         \label{fig:performance_plot}
 \end{figure}
 
@@ -152,6 +166,7 @@ First order method
 
 - The MIO approach outperforms LARS in terms of predictive results
 - The proposed mild approach allows for obtaining high quality results in times similar to LARS
+- The best subset approach conversely to LASSO in a single run does not aim to maximally reduce the amoun of nonzero coefficients
 
 ## Bibliography
 
