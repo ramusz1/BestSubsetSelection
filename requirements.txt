@@ -1,4 +1,4 @@
-certifi==2017.7.27.1
+certifi==2022.12.7
 chardet==3.0.4
 cplex==12.9.0.0
 docloud==1.0.257
